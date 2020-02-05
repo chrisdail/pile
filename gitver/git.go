@@ -65,3 +65,7 @@ func checkIsDirty(paths []string) (bool, error) {
 
 	return status != "", nil
 }
+
+func branch() (string, error) {
+	return git("branch", "--show-current")
+}

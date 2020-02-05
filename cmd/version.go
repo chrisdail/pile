@@ -10,10 +10,12 @@ import (
 var versionTemplate string
 
 var versionCmd = &cobra.Command{
-	Use:     "version [projects...]",
-	Short:   "Generates a git-based version for projects relative to the git root",
-	Example: "  pile version app/backend ui",
-	Args:    cobra.ArbitraryArgs,
+	Use:   "version [projects...]",
+	Short: "Generates a git-based version for projects relative to the git root",
+	Example: `  pile version
+  pile version app/backend ui
+  pile version -t "{{.Branch}}.{{.Hash}}"`,
+	Args: cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		version, err := gitver.ForProjects(args)
 		if err != nil {

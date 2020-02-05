@@ -13,6 +13,7 @@ const DefaultTemplate = "{{if .Dirty}}dirty-{{.User}}-{{end}}{{.Commits}}.{{.Has
 
 // GitVersion version information about one or more git projects
 type GitVersion struct {
+	Branch  string
 	Commits string
 	Hash    string
 	Dirty   bool
@@ -50,6 +51,10 @@ func ForProjects(projects []string) (*GitVersion, error) {
 	}
 
 	gitVersion := &GitVersion{}
+
+	if branch, err := branch(); err == nil {
+		gitVersion.Branch = branch
+	}
 
 	if commits, err := countCommits(paths); err == nil {
 		gitVersion.Commits = commits
