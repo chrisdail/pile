@@ -11,6 +11,8 @@ import (
 // DefaultTemplate Default template for formatting GitVersion using String()
 const DefaultTemplate = "{{if .Dirty}}dirty-{{.User}}-{{end}}{{.Commits}}.{{.Hash}}"
 
+var sanitizedUserCache = &cachedStringResponse{}
+
 // GitVersion version information about one or more git projects
 type GitVersion struct {
 	Branch  string
@@ -22,7 +24,7 @@ type GitVersion struct {
 
 // FormatTemplate formats a GitVersion using a text/template string
 func (ver *GitVersion) FormatTemplate(arg string) (string, error) {
-	versionTemplate, err := template.New("version").Parse(arg)
+	versionTemplate, err := template.New("Version Template").Parse(arg)
 	if err != nil {
 		return "", err
 	}
@@ -37,54 +39,61 @@ func (ver *GitVersion) FormatTemplate(arg string) (string, error) {
 func (ver *GitVersion) String() string {
 	result, err := ver.FormatTemplate(DefaultTemplate)
 	if err != nil {
-		log.Println("Error formatting version template: %s", err)
+		log.Fatalf("Error formatting version template: %s", err)
 		return ""
 	}
 	return result
 }
 
 // ForProjects computes the GitVersion for a set of projects relative to the git root
-func ForProjects(projects []string) (*GitVersion, error) {
+func (ver *GitVersion) ForProjects(projects []string) error {
 	paths, err := GitProjectPaths(projects)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	gitVersion := &GitVersion{}
-
-	if branch, err := GitBranch(); err == nil {
-		gitVersion.Branch = branch
+	if ver.Branch, err = GitBranch(); err != nil {
+		return err
 	}
 
-	if commits, err := countCommits(paths); err == nil {
-		gitVersion.Commits = commits
+	if ver.Commits, err = countCommits(paths); err != nil {
+		return err
 	}
 
 	rev, err := headCommit(paths)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if hash, err := revParseShort(rev); err == nil {
-		gitVersion.Hash = hash
-	}
-
-	if dirty, err := checkIsDirty(paths); err == nil {
-		gitVersion.Dirty = dirty
-		gitVersion.User = currentUser()
+	if ver.Hash, err = revParseShort(rev); err != nil {
+		return err
 	}
 
-	return gitVersion, nil
+	if ver.Dirty, err = checkIsDirty(paths); err != nil {
+		return err
+	}
+
+	if ver.User, err = currentUser(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func currentUser() string {
-	user, err := user.Current()
-	if err != nil {
-		panic(err)
-	}
+func currentUser() (string, error) {
+	sanitizedUserCache.Do(func() {
+		var currentUser *user.User
+		currentUser, sanitizedUserCache.err = user.Current()
+		if sanitizedUserCache.err != nil {
+			return
+		}
 
-	alphaNumericPattern, err := regexp.Compile("[^a-zA-Z0-9]+")
-	if err != nil {
-		panic(err)
-	}
-	return alphaNumericPattern.ReplaceAllString(user.Username, "")
+		var alphaNumericPattern *regexp.Regexp
+		alphaNumericPattern, sanitizedUserCache.err = regexp.Compile("[^a-zA-Z0-9]+")
+		if sanitizedUserCache.err != nil {
+			return
+		}
+
+		sanitizedUserCache.response = alphaNumericPattern.ReplaceAllString(currentUser.Username, "")
+		sanitizedUserCache.err = nil
+	})
+	return sanitizedUserCache.response, sanitizedUserCache.err
 }

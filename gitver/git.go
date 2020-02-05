@@ -4,11 +4,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"sync"
 )
 
-var gitRootCache = &cachedResponse{}
-var gitBranchCache = &cachedResponse{}
+var gitRootCache = &cachedStringResponse{}
+var gitBranchCache = &cachedStringResponse{}
 
 // GitRootPath retrieves the absolute path of the root of this versioned git tree
 func GitRootPath() (string, error) {
@@ -33,13 +32,7 @@ func GitProjectPaths(projects []string) ([]string, error) {
 	return paths, nil
 }
 
-type cachedResponse struct {
-	sync.Once
-	response string
-	err      error
-}
-
-func (cache *cachedResponse) cachedGit(args ...string) (string, error) {
+func (cache *cachedStringResponse) cachedGit(args ...string) (string, error) {
 	cache.Do(func() {
 		cache.response, cache.err = git(args...)
 	})

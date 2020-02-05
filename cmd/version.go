@@ -17,8 +17,8 @@ var versionCmd = &cobra.Command{
   pile version -t "{{.Branch}}.{{.Hash}}"`,
 	Args: cobra.ArbitraryArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		version, err := gitver.ForProjects(args)
-		if err != nil {
+		var version = &gitver.GitVersion{}
+		if err := version.ForProjects(args); err != nil {
 			return err
 		}
 
