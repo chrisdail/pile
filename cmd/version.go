@@ -16,15 +16,18 @@ var versionCmd = &cobra.Command{
   pile version app/backend ui
   pile version -t "{{.Branch}}.{{.Hash}}"`,
 	Args: cobra.ArbitraryArgs,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		version, err := gitver.ForProjects(args)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
-		if formatted, err := version.FormatTemplate(versionTemplate); err == nil {
-			fmt.Println(formatted)
+		formatted, err := version.FormatTemplate(versionTemplate)
+		if err != nil {
+			return err
 		}
+		fmt.Println(formatted)
+		return nil
 	},
 }
 

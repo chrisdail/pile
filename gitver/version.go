@@ -52,7 +52,7 @@ func ForProjects(projects []string) (*GitVersion, error) {
 
 	gitVersion := &GitVersion{}
 
-	if branch, err := branch(); err == nil {
+	if branch, err := GitBranch(); err == nil {
 		gitVersion.Branch = branch
 	}
 

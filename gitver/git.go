@@ -4,17 +4,19 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
-var gitRoot = ""
+var gitRootCache = &cachedResponse{}
+var gitBranchCache = &cachedResponse{}
 
 // GitRootPath retrieves the absolute path of the root of this versioned git tree
 func GitRootPath() (string, error) {
-	var err error
-	if gitRoot == "" {
-		gitRoot, err = git("rev-parse", "--show-toplevel")
-	}
-	return gitRoot, err
+	return gitRootCache.cachedGit("rev-parse", "--show-toplevel")
+}
+
+func GitBranch() (string, error) {
+	return gitBranchCache.cachedGit("branch", "--show-current")
 }
 
 // GitProjectPaths gives absolute paths given project paths relative to the git root
@@ -29,6 +31,19 @@ func GitProjectPaths(projects []string) ([]string, error) {
 		paths[i] = filepath.Join(rootPath, project)
 	}
 	return paths, nil
+}
+
+type cachedResponse struct {
+	sync.Once
+	response string
+	err      error
+}
+
+func (cache *cachedResponse) cachedGit(args ...string) (string, error) {
+	cache.Do(func() {
+		cache.response, cache.err = git(args...)
+	})
+	return cache.response, cache.err
 }
 
 func git(args ...string) (string, error) {
@@ -64,8 +79,4 @@ func checkIsDirty(paths []string) (bool, error) {
 	}
 
 	return status != "", nil
-}
-
-func branch() (string, error) {
-	return git("branch", "--show-current")
 }
