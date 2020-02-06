@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/chrisdail/pile/core"
+
 	"github.com/chrisdail/pile/gitver"
 
 	"github.com/spf13/cobra"
@@ -17,11 +19,13 @@ var rootCmd = &cobra.Command{
 	Use:     "pile",
 	Version: version,
 	Short:   "Simple docker container builder",
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		gitver.SetWorkingDir(rootDir)
+		return core.Workspace.SetDir(rootDir)
 	},
 }
 
+// Execute executes the root command
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

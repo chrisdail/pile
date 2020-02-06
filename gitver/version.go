@@ -45,13 +45,18 @@ func (ver *GitVersion) String() string {
 	return result
 }
 
-// ForProjects computes the GitVersion for a set of projects relative to the git root
-func (ver *GitVersion) ForProjects(projects []string) error {
-	paths, err := GitProjectPaths(projects)
-	if err != nil {
-		return err
+// New creates a new GitVersion for the specified paths
+func New(paths []string) (*GitVersion, error) {
+	var version = &GitVersion{}
+	if err := version.forPaths(paths); err != nil {
+		return nil, err
 	}
+	return version, nil
+}
 
+// ForProjects computes the GitVersion for a set of projects relative to the git root
+func (ver *GitVersion) forPaths(paths []string) error {
+	var err error
 	if ver.Branch, err = GitBranch(); err != nil {
 		return err
 	}

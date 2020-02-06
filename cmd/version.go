@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/chrisdail/pile/core"
+
 	"github.com/chrisdail/pile/gitver"
 	"github.com/spf13/cobra"
 )
@@ -17,8 +19,9 @@ var versionCmd = &cobra.Command{
   pile version -t "{{.Branch}}.{{.Hash}}"`,
 	Args: cobra.ArbitraryArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var version = &gitver.GitVersion{}
-		if err := version.ForProjects(args); err != nil {
+		paths := core.Workspace.ProjectPaths(args)
+		version, err := gitver.New(paths)
+		if err != nil {
 			return err
 		}
 
