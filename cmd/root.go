@@ -4,15 +4,22 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/chrisdail/pile/gitver"
+
 	"github.com/spf13/cobra"
 )
 
 const version = "0.0.1"
 
+var rootDir string
+
 var rootCmd = &cobra.Command{
 	Use:     "pile",
 	Version: version,
 	Short:   "Simple docker container builder",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		gitver.SetWorkingDir(rootDir)
+	},
 }
 
 func Execute() {
@@ -23,10 +30,5 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	//rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.pile.yaml)")
-
+	rootCmd.PersistentFlags().StringVarP(&rootDir, "root", "r", "", "Root workspace directory (defaults to git root)")
 }

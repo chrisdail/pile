@@ -6,14 +6,21 @@ import (
 	"strings"
 )
 
+var workingDir string
 var gitRootCache = &cachedStringResponse{}
 var gitBranchCache = &cachedStringResponse{}
+
+// SetWorkingDir sets the working directory for running git commands
+func SetWorkingDir(dir string) {
+	workingDir = dir
+}
 
 // GitRootPath retrieves the absolute path of the root of this versioned git tree
 func GitRootPath() (string, error) {
 	return gitRootCache.cachedGit("rev-parse", "--show-toplevel")
 }
 
+// GitBranch gets the current git branch
 func GitBranch() (string, error) {
 	return gitBranchCache.cachedGit("branch", "--show-current")
 }
@@ -40,7 +47,9 @@ func (cache *cachedStringResponse) cachedGit(args ...string) (string, error) {
 }
 
 func git(args ...string) (string, error) {
-	output, err := exec.Command("git", args...).Output()
+	cmd := exec.Command("git", args...)
+	cmd.Dir = workingDir
+	output, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}
