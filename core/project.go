@@ -1,105 +1,125 @@
 package core
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/chrisdail/pile/gitver"
+	"github.com/chrisdail/pile/registry"
 	"github.com/imdario/mergo"
 	"gopkg.in/yaml.v2"
 )
 
 const PileConfigName = "pile.yml"
-
-// #
-// # Containers can have a metadata config file called 'buildc.yml' in the root of their tree containing:
-// #
-// # name: alt-name                   // Alternative name for this image. Defaults to the directory name
-// # group: apps                      // Alternative sub-group for this image. Defaults to 'development'
-// # depends_on:
-// #   - other/project                // Optionally include other projects in the version.sh hash
-// # args:
-// #   KEY: VALUE                     // A map of arguments for the docker build: `--build-arg`
-// # test:                            // Optional testing section
-// #  target: test                    // Target in the Dockerfile for the test runner
-// #  copy_results:                   // Copy test results from the container to the local filesystem (docker cp)
-// #    src_path: /app/build/.        // Location to copy files from in the container
-// #    dest_path: build              // Location to copy files to relative to the project directory
-// # alt_container:                   // Root level options for an alternate container (specified via container parameter init)
+const Dockerfile = "Dockerfile"
 
 type ProjectConfig struct {
-	Name            string
-	ImagePrefix     string            `yaml:"image_prefix"`
-	VersionPrefix   string            `yaml:"version_prefix"`
-	VersionTemplate string            `yaml:"version_template"`
-	DependsOn       []string          `yaml:"depends_on"`
-	BuildArgs       map[string]string `yaml:"build_args"`
-	Test            struct {
-		Target      string
+	// Alternative name for this image. If none specified, defaults to the directory of the project
+	Name string
+
+	// Prefix for the container image name
+	ImagePrefix string `yaml:"image_prefix"`
+
+	// Prefix to add in front of the calculated version. Useful for variations of the same container with the same registry
+	VersionPrefix string `yaml:"version_prefix"`
+
+	// Template for computing the version strong
+	VersionTemplate string `yaml:"version_template"`
+
+	// Other projects that this project depends on. These are incorporated into the version string
+	DependsOn []string `yaml:"depends_on"`
+
+	// Arguments passed to the build command via `--build-arg`
+	BuildArgs map[string]string `yaml:"build_args"`
+
+	// Optional testing
+	Test struct {
+		// Alternate target in a multi-stage build to use for tests. Build is only successful if the tests suceed
+		Target string
+
+		// Copies test results from the container to the local filesystem (via docker cp)
 		CopyResults struct {
+			// Location to copy files from in the container
 			SrcPath string `yaml:"src_path"`
+			// Location to copy files to relative to the project directory
 			DstPath string `yaml:"dst_path"`
 		} `yaml:"copy_results"`
 	}
-	Registry struct {
-		ECR struct {
-			AccountID string `yaml:"account_id"`
-			Region    string
-		}
-	}
+
+	// Docker registry settings for pushing images to and caching already built images
+	Registry registry.RegistryConfig
 }
 
 type Project struct {
-	Dir    string
-	Config ProjectConfig
+	Dir string
+
+	Config              ProjectConfig
+	CanBuild            bool
+	GitVersion          *gitver.GitVersion
+	Tag                 string
+	Image               string
+	FullyQualifiedImage string
 }
 
-func (project *Project) Name() string {
-	if project.Config.Name != "" {
-		return project.Config.Name
-	}
-	return filepath.Dir(project.Dir)
-}
-
-func (project *Project) Load() {
+func (project *Project) Load(defaults *ProjectConfig) error {
 	configPath := filepath.Join(project.Dir, PileConfigName)
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		log.Printf("Config file does not exist: %s", configPath)
-		return
+		return nil
 	}
 	configFile, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		log.Printf("Error reading config file %s: %s\n", configPath, err)
-		return
+		return nil
 	}
 
 	err = yaml.Unmarshal(configFile, &project.Config)
 	if err != nil {
 		log.Printf("Error parsing YAML: %s\n", err)
-		return
+		return nil
 	}
-}
 
-func (project *Project) LoadWithDefaults(defaults *ProjectConfig) {
-	project.Load()
+	// Merge in defaults
 	mergo.Merge(&project.Config, defaults)
-}
 
-func (project *Project) Version() (string, error) {
-	// TODO: Handle dependencies
-	version, err := gitver.New([]string{project.Dir})
-	if err != nil {
-		return "", err
+	// Compute build related information for this project
+
+	// Default the name to the directory if not present
+	if project.Config.Name == "" {
+		project.Config.Name = filepath.Dir(project.Dir)
 	}
 
-	renderedVersion, err := version.FormatTemplate(project.Config.VersionTemplate)
+	// If there is no Dockerfile, skip all build related computations
+	dockerfilePath := filepath.Join(project.Dir, Dockerfile)
+	if _, err := os.Stat(dockerfilePath); os.IsNotExist(err) {
+		// No dockerfile
+		project.CanBuild = false
+		return nil
+	} else {
+		project.CanBuild = true
+	}
+
+	// Load version for this project
+	// TODO: Handle dependencies
+	project.GitVersion, err = gitver.New([]string{project.Dir})
 	if err != nil {
-		return "", err
+		return err
+	}
+
+	// Compute the version tag for building
+	project.Tag, err = project.GitVersion.FormatTemplate(project.Config.VersionTemplate)
+	if err != nil {
+		return err
 	}
 	if project.Config.VersionPrefix != "" {
-		return project.Config.VersionPrefix + renderedVersion, nil
+		project.Tag = project.Config.VersionPrefix + project.Tag
 	}
-	return renderedVersion, nil
+
+	// Compute the image name for this project
+	project.Image = fmt.Sprintf("%s%s:%s", project.Config.ImagePrefix, project.Config.Name, project.Tag)
+	project.FullyQualifiedImage = fmt.Sprintf("%s%s", project.Config.Registry.RegistryPrefix(), project.Image)
+	return nil
 }

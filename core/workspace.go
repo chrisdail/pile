@@ -73,11 +73,15 @@ func (ws *workspace) ProjectsFromArgs(args []string) ([]Project, error) {
 		paths = ws.ProjectPaths(args)
 	}
 
-	return ws.loadProjects(paths), err
+	return ws.loadProjects(paths)
 }
 
-func (ws *workspace) loadProjects(paths []string) []Project {
-	ws.Load()
+func (ws *workspace) loadProjects(paths []string) ([]Project, error) {
+	err := ws.Load(&ProjectConfig{})
+	if err != nil {
+		return nil, err
+	}
+
 	projects := make([]Project, len(paths))
 	for i, path := range paths {
 		// If the project and workspace directory are the same, this is the root project
@@ -85,8 +89,11 @@ func (ws *workspace) loadProjects(paths []string) []Project {
 			projects[i] = ws.Project
 		} else {
 			projects[i] = Project{Dir: path}
-			projects[i].LoadWithDefaults(&ws.Config)
+			err := projects[i].Load(&ws.Config)
+			if err != nil {
+				return projects, err
+			}
 		}
 	}
-	return projects
+	return projects, nil
 }
