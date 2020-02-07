@@ -23,8 +23,11 @@ type GitVersion struct {
 }
 
 // FormatTemplate formats a GitVersion using a text/template string
-func (ver *GitVersion) FormatTemplate(arg string) (string, error) {
-	versionTemplate, err := template.New("Version Template").Parse(arg)
+func (ver *GitVersion) FormatTemplate(templateString string) (string, error) {
+	if templateString == "" {
+		templateString = DefaultTemplate
+	}
+	versionTemplate, err := template.New("Version Template").Parse(templateString)
 	if err != nil {
 		return "", err
 	}
@@ -69,7 +72,9 @@ func (ver *GitVersion) forPaths(paths []string) error {
 	if err != nil {
 		return err
 	}
-	if ver.Hash, err = revParseShort(rev); err != nil {
+	if rev == "" {
+		ver.Hash = "untracked"
+	} else if ver.Hash, err = revParseShort(rev); err != nil {
 		return err
 	}
 

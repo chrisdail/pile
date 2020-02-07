@@ -1,6 +1,7 @@
 package gitver
 
 import (
+	"fmt"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -51,7 +52,7 @@ func git(args ...string) (string, error) {
 	cmd.Dir = workingDir
 	output, err := cmd.Output()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Error executing git %s: %w", args, err)
 	}
 	return strings.TrimSpace(string(output)), nil
 }
