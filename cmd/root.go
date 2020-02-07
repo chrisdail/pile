@@ -11,14 +11,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const version = "0.0.1"
-
 var rootDir string
 
 var rootCmd = &cobra.Command{
-	Use:     "pile",
-	Version: version,
-	Short:   "Simple docker container builder",
+	Use:   "pile",
+	Short: "Simple docker container builder",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		gitver.SetWorkingDir(rootDir)
 		return core.Workspace.SetDir(rootDir)

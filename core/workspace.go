@@ -3,13 +3,14 @@ package core
 import (
 	"errors"
 	"log"
+	"os"
 	"path/filepath"
 
 	"github.com/chrisdail/pile/gitver"
 )
 
 type workspace struct {
-	Dir string
+	Project
 }
 
 // Workspace project workspace
@@ -18,6 +19,10 @@ var Workspace = &workspace{}
 // SetWorkingDir sets the workspace working directory
 func (ws *workspace) SetDir(dir string) error {
 	if dir != "" {
+		if _, err := os.Stat(dir); os.IsNotExist(err) {
+			return err
+		}
+
 		ws.Dir = dir
 	} else {
 		var err error
@@ -40,4 +45,48 @@ func (ws *workspace) ProjectPaths(projects []string) []string {
 		paths[i] = filepath.Join(ws.Dir, project)
 	}
 	return paths
+}
+
+// DiscoverProjectPaths walks the workspace tree, searching for project paths
+func (ws *workspace) DiscoverProjectPaths() ([]string, error) {
+	var paths []string
+	err := filepath.Walk(ws.Dir, func(path string, info os.FileInfo, err error) error {
+		if info.Name() == PileConfigName {
+			paths = append(paths, filepath.Dir(path))
+		}
+		return nil
+	})
+	return paths, err
+}
+
+func (ws *workspace) ProjectsFromArgs(args []string) ([]Project, error) {
+	var (
+		paths []string
+		err   error
+	)
+	if len(args) == 0 {
+		paths, err = ws.DiscoverProjectPaths()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		paths = ws.ProjectPaths(args)
+	}
+
+	return ws.loadProjects(paths), err
+}
+
+func (ws *workspace) loadProjects(paths []string) []Project {
+	ws.Load()
+	projects := make([]Project, len(paths))
+	for i, path := range paths {
+		// If the project and workspace directory are the same, this is the root project
+		if ws.Dir == path {
+			projects[i] = ws.Project
+		} else {
+			projects[i] = Project{Dir: path}
+			projects[i].LoadWithDefaults(&ws.Config)
+		}
+	}
+	return projects
 }
