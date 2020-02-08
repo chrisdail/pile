@@ -42,9 +42,9 @@ type ProjectConfig struct {
 
 		// Copies test results from the container to the local filesystem (via docker cp)
 		CopyResults struct {
-			// Location to copy files from in the container
+			// Location to copy files from in the container. Example: /app/build/.
 			SrcPath string `yaml:"src_path"`
-			// Location to copy files to relative to the project directory
+			// Location to copy files to relative to the project directory. Example: build
 			DstPath string `yaml:"dst_path"`
 		} `yaml:"copy_results"`
 	}
@@ -89,7 +89,7 @@ func (project *Project) Load(defaults *ProjectConfig) error {
 
 	// Default the name to the directory if not present
 	if project.Config.Name == "" {
-		project.Config.Name = filepath.Dir(project.Dir)
+		project.Config.Name = filepath.Base(project.Dir)
 	}
 
 	// If there is no Dockerfile, skip all build related computations

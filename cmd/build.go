@@ -20,12 +20,12 @@ var buildCmd = &cobra.Command{
 		}
 
 		for _, project := range projects {
-			_, err := piler.Build(&project)
+			_, err = piler.Build(&project)
 			if err != nil {
-				log.Fatalln(err)
+				log.Println(err)
 			}
 		}
-		return nil
+		return err
 	},
 }
 

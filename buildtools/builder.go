@@ -11,4 +11,9 @@ type BuildOptions struct {
 
 type BuildTools interface {
 	Build(options *BuildOptions) error
+	Push(image string) error
+
+	Run(dir string, name string, image string) error
+	Cp(src string, dst string) error
+	Rm(name string) error
 }

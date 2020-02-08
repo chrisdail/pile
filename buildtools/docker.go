@@ -2,6 +2,7 @@ package buildtools
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,6 +11,8 @@ import (
 type DockerBuildTools struct{}
 
 func (*DockerBuildTools) Build(options *BuildOptions) error {
+	log.Printf("Building %s\n", options.Image)
+
 	args := []string{"build", "."}
 	if options.File != "" {
 		args = append(args,
@@ -29,6 +32,22 @@ func (*DockerBuildTools) Build(options *BuildOptions) error {
 
 	args = append(args, "-t", options.Image)
 	return docker(options.Dir, args...)
+}
+
+func (*DockerBuildTools) Push(image string) error {
+	return docker("", "push", image)
+}
+
+func (*DockerBuildTools) Run(dir string, name string, image string) error {
+	return docker(dir, "run", "-t", "--name", name, image)
+}
+
+func (*DockerBuildTools) Cp(src string, dst string) error {
+	return docker("", "cp", src, dst)
+}
+
+func (*DockerBuildTools) Rm(name string) error {
+	return docker("", "rm", "-f", name)
 }
 
 func docker(dir string, args ...string) error {

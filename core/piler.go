@@ -1,12 +1,18 @@
 package core
 
 import (
+	"errors"
+	"fmt"
 	"log"
+	"math/rand"
+	"time"
 
 	"github.com/chrisdail/pile/buildtools"
 )
 
 var tools = &buildtools.DockerBuildTools{}
+
+var ErrorTestsFailed = errors.New("Tests Failed")
 
 type Piler struct {
 	Force     bool
@@ -29,18 +35,16 @@ func (piler *Piler) Build(project *Project) (string, error) {
 	// return project.FullyQualifiedImage, nil
 	//}
 
-	if !piler.SkipTests {
-		// Run Tests
+	if !piler.SkipTests && project.Config.Test.Target != "" {
+		if err := piler.RunTests(project); err != nil {
+			return "", err
+		}
 	}
-
-	// TODO: Do build
 
 	var buildImage = project.FullyQualifiedImage
 	if piler.SkipPush {
 		buildImage = project.Image
 	}
-
-	log.Printf("Building %s\n", buildImage)
 
 	buildOptions := &buildtools.BuildOptions{
 		Dir:       project.Dir,
@@ -60,4 +64,35 @@ func (piler *Piler) Build(project *Project) (string, error) {
 
 	// WriteManifest()
 	return buildImage, nil
+}
+
+func (piler *Piler) RunTests(project *Project) error {
+	testImage := fmt.Sprintf("%s-%s:%s", project.Config.Name, project.Config.Test.Target, project.Tag)
+
+	buildOptions := &buildtools.BuildOptions{
+		Dir:       project.Dir,
+		Image:     testImage,
+		Pull:      piler.Force,
+		Target:    project.Config.Test.Target,
+		BuildArgs: project.Config.BuildArgs,
+	}
+	if err := tools.Build(buildOptions); err != nil {
+		return err
+	}
+
+	log.Printf("Running tests for %s using %s", project.Config.Name, testImage)
+	rand.Seed(time.Now().UnixNano())
+	containerName := fmt.Sprintf("pile-%s-%d", project.Config.Name, rand.Intn(100000))
+	err := tools.Run(project.Dir, containerName, testImage)
+
+	// TODO: Copy results
+
+	// Remove the container. Intentionally ignore any errors
+	tools.Rm(containerName)
+
+	if err != nil {
+		log.Println(err)
+		return fmt.Errorf("%s: %s", project.Config.Name, ErrorTestsFailed)
+	}
+	return nil
 }
