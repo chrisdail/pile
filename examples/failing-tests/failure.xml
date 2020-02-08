@@ -1,0 +1,6 @@
+<testsuite name="UI Tests" tests="1">
+  <testcase classname="ui" name="Tests">
+    <failure type="TestsFailed"/>
+    <system-out>Some tests failed</system-out>
+  </testcase>
+</testsuite>

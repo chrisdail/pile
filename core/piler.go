@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"path/filepath"
 	"time"
 
 	"github.com/chrisdail/pile/buildtools"
@@ -83,9 +84,17 @@ func (piler *Piler) RunTests(project *Project) error {
 	log.Printf("Running tests for %s using %s", project.Config.Name, testImage)
 	rand.Seed(time.Now().UnixNano())
 	containerName := fmt.Sprintf("pile-%s-%d", project.Config.Name, rand.Intn(100000))
+
+	// Run test container in docker
 	err := tools.Run(project.Dir, containerName, testImage)
 
-	// TODO: Copy results
+	// Copy test results
+	if project.Config.Test.CopyResults.SrcPath != "" && project.Config.Test.CopyResults.DstPath != "" {
+		tools.Cp(
+			fmt.Sprintf("%s:%s", containerName, project.Config.Test.CopyResults.SrcPath),
+			filepath.Join(project.Dir, project.Config.Test.CopyResults.DstPath),
+		)
+	}
 
 	// Remove the container. Intentionally ignore any errors
 	tools.Rm(containerName)
