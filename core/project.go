@@ -37,7 +37,7 @@ type ProjectConfig struct {
 
 	// Optional testing
 	Test struct {
-		// Alternate target in a multi-stage build to use for tests. Build is only successful if the tests suceed
+		// Alternate target in a multi-stage build to use for tests. Build is only successful if the tests succeed
 		Target string
 
 		// Copies test results from the container to the local filesystem (via docker cp)
@@ -56,12 +56,13 @@ type ProjectConfig struct {
 type Project struct {
 	Dir string
 
-	Config              ProjectConfig
-	CanBuild            bool
-	GitVersion          *gitver.GitVersion
-	Tag                 string
-	Image               string
-	FullyQualifiedImage string
+	Config            ProjectConfig
+	CanBuild          bool
+	GitVersion        *gitver.GitVersion
+	Repository        string
+	Tag               string
+	Image             string
+	ImageWithRegistry string
 }
 
 func (project *Project) Load(defaults *ProjectConfig) error {
@@ -119,7 +120,8 @@ func (project *Project) Load(defaults *ProjectConfig) error {
 	}
 
 	// Compute the image name for this project
-	project.Image = fmt.Sprintf("%s%s:%s", project.Config.ImagePrefix, project.Config.Name, project.Tag)
-	project.FullyQualifiedImage = fmt.Sprintf("%s%s", project.Config.Registry.RegistryPrefix(), project.Image)
+	project.Repository = fmt.Sprintf("%s%s", project.Config.ImagePrefix, project.Config.Name)
+	project.Image = fmt.Sprintf("%s:%s", project.Repository, project.Tag)
+	project.ImageWithRegistry = fmt.Sprintf("%s%s", project.Config.Registry.RegistryPrefix(), project.Image)
 	return nil
 }

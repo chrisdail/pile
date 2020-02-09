@@ -25,7 +25,7 @@ var infoCmd = &cobra.Command{
 			if project.CanBuild {
 				fmt.Printf("  Builds: %s\n  Pushes As: %s\n",
 					project.Image,
-					project.FullyQualifiedImage,
+					project.ImageWithRegistry,
 				)
 			}
 		}

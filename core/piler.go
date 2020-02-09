@@ -1,10 +1,13 @@
 package core
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -21,11 +24,30 @@ type Piler struct {
 	SkipTests bool
 }
 
-func (piler *Piler) Build(project *Project) (string, error) {
+type BuildImage struct {
+	Name                string `json:"name"`
+	Repository          string `json:"repository"`
+	Tag                 string `json:"tag"`
+	FullyQualifiedImage string `json:"fully_qualified_image"`
+}
+
+func (piler *Piler) Build(project *Project) (*BuildImage, error) {
 	if !project.CanBuild {
-		return "", nil
+		return &BuildImage{}, nil
 	}
 
+	buildImage := &BuildImage{
+		Name:                project.Config.Name,
+		Repository:          project.Repository,
+		Tag:                 project.Tag,
+		FullyQualifiedImage: project.ImageWithRegistry,
+	}
+
+	if piler.SkipPush {
+		buildImage.FullyQualifiedImage = project.Image
+	}
+
+	// Determine if we need to build or not
 	if piler.Force {
 		log.Println("Forcing rebuild due to --force flag")
 	} else if project.GitVersion.Dirty {
@@ -33,23 +55,19 @@ func (piler *Piler) Build(project *Project) (string, error) {
 	} // else if ExistsInRegistry() {}
 	// log.Printf("Skipping build %s", image)
 	// WriteManifest
-	// return project.FullyQualifiedImage, nil
+	// buildImage.WriteManifest(project.Dir)
+	// return buildImage.FullyQualifiedImage, nil
 	//}
 
 	if !piler.SkipTests && project.Config.Test.Target != "" {
 		if err := piler.RunTests(project); err != nil {
-			return "", err
+			return buildImage, err
 		}
-	}
-
-	var buildImage = project.FullyQualifiedImage
-	if piler.SkipPush {
-		buildImage = project.Image
 	}
 
 	buildOptions := &buildtools.BuildOptions{
 		Dir:       project.Dir,
-		Image:     buildImage,
+		Image:     buildImage.FullyQualifiedImage,
 		Pull:      piler.Force,
 		BuildArgs: project.Config.BuildArgs,
 	}
@@ -63,12 +81,28 @@ func (piler *Piler) Build(project *Project) (string, error) {
 		// Push image
 	}
 
-	// WriteManifest()
-	return buildImage, nil
+	err := buildImage.WriteManifest(project.Dir)
+	return buildImage, err
+}
+
+func (image *BuildImage) WriteManifest(dir string) error {
+	bytes, err := json.MarshalIndent(image, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	buildDir := filepath.Join(dir, "build")
+	os.MkdirAll(buildDir, os.ModePerm)
+	descriptorPath := filepath.Join(buildDir, "pile-image.json")
+	err = ioutil.WriteFile(descriptorPath, bytes, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (piler *Piler) RunTests(project *Project) error {
-	testImage := fmt.Sprintf("%s-%s:%s", project.Config.Name, project.Config.Test.Target, project.Tag)
+	testImage := fmt.Sprintf("%s-%s:%s", project.Repository, project.Config.Test.Target, project.Tag)
 
 	buildOptions := &buildtools.BuildOptions{
 		Dir:       project.Dir,
