@@ -29,7 +29,7 @@ type ProjectConfig struct {
 	// Template for computing the version strong
 	VersionTemplate string `yaml:"version_template"`
 
-	// Other projects that this project depends on. These are incorporated into the version string
+	// Relative paths to other projects that this project depends on. These are incorporated into the version string
 	DependsOn []string `yaml:"depends_on"`
 
 	// Arguments passed to the build command via `--build-arg`
@@ -104,8 +104,7 @@ func (project *Project) Load(defaults *ProjectConfig) error {
 	}
 
 	// Load version for this project
-	// TODO: Handle dependencies
-	project.GitVersion, err = gitver.New([]string{project.Dir})
+	project.GitVersion, err = gitver.New(project.versionedPaths())
 	if err != nil {
 		return err
 	}
@@ -124,4 +123,14 @@ func (project *Project) Load(defaults *ProjectConfig) error {
 	project.Image = fmt.Sprintf("%s:%s", project.Repository, project.Tag)
 	project.ImageWithRegistry = fmt.Sprintf("%s%s", project.Config.Registry.RegistryPrefix(), project.Image)
 	return nil
+}
+
+// Computes all directories factored into a version check. This includes the project directory and all dependencies
+func (project *Project) versionedPaths() []string {
+	paths := []string{project.Dir}
+
+	for _, dependency := range project.Config.DependsOn {
+		paths = append(paths, filepath.Join(project.Dir, dependency))
+	}
+	return paths
 }
