@@ -48,7 +48,7 @@ func (piler *Piler) Build(project *Project) (*BuildImage, error) {
 		log.Println("Forcing rebuild due to --force flag")
 	} else if project.GitVersion.Dirty {
 		log.Println("Filesystem is dirty. Requires rebuilding")
-	} else if project.Config.Registry.ConfiguredRegistry != nil &&
+	} else if project.Config.Registry.ConfiguredRegistry() != nil &&
 		project.Config.Registry.ConfiguredRegistry().Contains(project.Repository, project.Tag) {
 
 		log.Printf("Skipping build %s. Exists in registry", buildImage.FullyQualifiedImage)
@@ -74,7 +74,7 @@ func (piler *Piler) Build(project *Project) (*BuildImage, error) {
 
 	if piler.SkipPush {
 		log.Printf("Skipping push %s\n", buildImage.FullyQualifiedImage)
-	} else if project.Config.Registry.ConfiguredRegistry != nil {
+	} else if project.Config.Registry.ConfiguredRegistry() != nil {
 		log.Printf("Pushing image %s\n", buildImage.FullyQualifiedImage)
 		if err := tools.Push(buildImage.FullyQualifiedImage); err != nil {
 			return buildImage, err

@@ -82,9 +82,6 @@ func (ws *workspace) loadProjects(paths []string) ([]Project, error) {
 		return nil, err
 	}
 
-	// Remove the name from the workspace project as it is not a default
-	ws.Config.Name = ""
-
 	projects := make([]Project, len(paths))
 	for i, path := range paths {
 		if ws.Dir == path {

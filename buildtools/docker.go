@@ -53,7 +53,7 @@ func (*DockerBuildTools) Rm(name string) error {
 func docker(dir string, args ...string) error {
 	cmd := exec.Command("docker", args...)
 	cmd.Dir = dir
-	cmd.Stdout = os.Stdout
+	cmd.Stdout = os.Stderr
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {

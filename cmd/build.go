@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/chrisdail/pile/core"
@@ -19,13 +20,17 @@ var buildCmd = &cobra.Command{
 			return err
 		}
 
+		var lastBuildErr error
 		for _, project := range projects {
-			_, err = piler.Build(&project)
+			buildImage, err := piler.Build(&project)
 			if err != nil {
 				log.Println(err)
+				lastBuildErr = err
+			} else {
+				fmt.Print(buildImage.FullyQualifiedImage)
 			}
 		}
-		return err
+		return lastBuildErr
 	},
 }
 
