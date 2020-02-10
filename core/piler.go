@@ -43,16 +43,13 @@ func (piler *Piler) Build(project *Project) (*BuildImage, error) {
 		FullyQualifiedImage: project.ImageWithRegistry,
 	}
 
-	if piler.SkipPush {
-		buildImage.FullyQualifiedImage = project.Image
-	}
-
 	// Determine if we need to build or not
 	if piler.Force {
 		log.Println("Forcing rebuild due to --force flag")
 	} else if project.GitVersion.Dirty {
 		log.Println("Filesystem is dirty. Requires rebuilding")
-	} // else if ExistsInRegistry() {}
+	}
+	// else if ExistsInRegistry() {}
 	// log.Printf("Skipping build %s", image)
 	// WriteManifest
 	// buildImage.WriteManifest(project.Dir)
@@ -76,9 +73,12 @@ func (piler *Piler) Build(project *Project) (*BuildImage, error) {
 	}
 
 	if piler.SkipPush {
-		// Log
-	} else {
-		// Push image
+		log.Printf("Skipping push %s\n", buildImage.FullyQualifiedImage)
+	} else if project.CanPush {
+		log.Printf("Pushing image %s\n", buildImage.FullyQualifiedImage)
+		if err := tools.Push(buildImage.FullyQualifiedImage); err != nil {
+			return buildImage, err
+		}
 	}
 
 	err := buildImage.WriteManifest(project.Dir)

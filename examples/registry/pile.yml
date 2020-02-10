@@ -1,2 +1,6 @@
 # Root configuration usually just has defaults
 image_prefix: "development/"
+
+registry:
+    registry_v2:
+        url: "localhost:5000"

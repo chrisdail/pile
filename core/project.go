@@ -13,8 +13,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const PileConfigName = "pile.yml"
-const Dockerfile = "Dockerfile"
+const pileConfigName = "pile.yml"
+const dockerfile = "Dockerfile"
 
 type ProjectConfig struct {
 	// Alternative name for this image. If none specified, defaults to the directory of the project
@@ -63,10 +63,11 @@ type Project struct {
 	Tag               string
 	Image             string
 	ImageWithRegistry string
+	CanPush           bool
 }
 
 func (project *Project) Load(defaults *ProjectConfig) error {
-	configPath := filepath.Join(project.Dir, PileConfigName)
+	configPath := filepath.Join(project.Dir, pileConfigName)
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		log.Printf("Config file does not exist: %s", configPath)
 		return nil
@@ -94,7 +95,7 @@ func (project *Project) Load(defaults *ProjectConfig) error {
 	}
 
 	// If there is no Dockerfile, skip all build related computations
-	dockerfilePath := filepath.Join(project.Dir, Dockerfile)
+	dockerfilePath := filepath.Join(project.Dir, dockerfile)
 	if _, err := os.Stat(dockerfilePath); os.IsNotExist(err) {
 		// No dockerfile
 		project.CanBuild = false
@@ -122,6 +123,12 @@ func (project *Project) Load(defaults *ProjectConfig) error {
 	// Compute the image name for this project
 	project.Repository = fmt.Sprintf("%s%s", project.Config.ImagePrefix, project.Config.Name)
 	project.Image = fmt.Sprintf("%s:%s", project.Repository, project.Tag)
+
+	registryPrefix := project.Config.Registry.RegistryPrefix()
 	project.ImageWithRegistry = fmt.Sprintf("%s%s", project.Config.Registry.RegistryPrefix(), project.Image)
+	project.CanPush = false
+	if registryPrefix != "" {
+		project.CanPush = true
+	}
 	return nil
 }

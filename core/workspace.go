@@ -51,7 +51,7 @@ func (ws *workspace) ProjectPaths(projects []string) []string {
 func (ws *workspace) DiscoverProjectPaths() ([]string, error) {
 	var paths []string
 	err := filepath.Walk(ws.Dir, func(path string, info os.FileInfo, err error) error {
-		if info.Name() == PileConfigName {
+		if info.Name() == pileConfigName {
 			paths = append(paths, filepath.Dir(path))
 		}
 		return nil

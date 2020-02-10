@@ -1,32 +1,31 @@
 package registry
 
-import (
-	"fmt"
-)
-
-const DefaultECRRegion = "us-east-1"
+type Registry interface {
+	Prefix() string
+	Contains(repository string, tag string) (bool, error)
+}
 
 type RegistryConfig struct {
 	// Standard Docker Registry v2
-	RegistryV2 struct {
-		URL string
-	}
+	RegistryV2 RegistryDockerV2 `yaml:"registry_v2"`
+
 	// Amazon ECR
-	ECR struct {
-		AccountID string `yaml:"account_id"`
-		Region    string
+	ECR AmazonECR
+}
+
+func (config *RegistryConfig) ConfiguredRegistry() Registry {
+	if config.RegistryV2.URL != "" {
+		return &config.RegistryV2
+	} else if config.ECR.AccountID != "" {
+		return &config.ECR
 	}
+	return nil
 }
 
 func (config *RegistryConfig) RegistryPrefix() string {
-	if config.RegistryV2.URL != "" {
-		return fmt.Sprintf("%s/", config.RegistryV2.URL)
-	} else if config.ECR.AccountID != "" {
-		region := config.ECR.Region
-		if region == "" {
-			region = DefaultECRRegion
-		}
-		return fmt.Sprintf("%s.dkr.ecr.%s.amazonaws.com/", config.ECR.AccountID, region)
+	registry := config.ConfiguredRegistry()
+	if registry == nil {
+		return ""
 	}
-	return ""
+	return registry.Prefix()
 }
