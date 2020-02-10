@@ -20,6 +20,9 @@ type ProjectConfig struct {
 	// Alternative name for this image. If none specified, defaults to the directory of the project
 	Name string
 
+	// Alternate context directory (Directory to "build" the image from)
+	ContextDir string `yaml:"context_dir"`
+
 	// Prefix for the container image name
 	ImagePrefix string `yaml:"image_prefix"`
 
@@ -129,8 +132,20 @@ func (project *Project) Load(defaults *ProjectConfig) error {
 func (project *Project) versionedPaths() []string {
 	paths := []string{project.Dir}
 
+	contextDir := project.ContextDir()
+	if project.Dir != contextDir {
+		paths = append(paths, contextDir)
+	}
+
 	for _, dependency := range project.Config.DependsOn {
 		paths = append(paths, filepath.Join(project.Dir, dependency))
 	}
 	return paths
+}
+
+func (project *Project) ContextDir() string {
+	if project.Config.ContextDir != "" {
+		return filepath.Join(project.Dir, project.Config.ContextDir)
+	}
+	return project.Dir
 }

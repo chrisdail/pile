@@ -63,7 +63,7 @@ func (piler *Piler) Build(project *Project) (*BuildImage, error) {
 	}
 
 	buildOptions := &buildtools.BuildOptions{
-		Dir:       project.Dir,
+		Dir:       project.ContextDir(),
 		Image:     buildImage.FullyQualifiedImage,
 		Pull:      piler.Force,
 		BuildArgs: project.Config.BuildArgs,
@@ -105,7 +105,7 @@ func (piler *Piler) RunTests(project *Project) error {
 	testImage := fmt.Sprintf("%s-%s:%s", project.Repository, project.Config.Test.Target, project.Tag)
 
 	buildOptions := &buildtools.BuildOptions{
-		Dir:       project.Dir,
+		Dir:       project.ContextDir(),
 		Image:     testImage,
 		Pull:      piler.Force,
 		Target:    project.Config.Test.Target,
@@ -120,13 +120,13 @@ func (piler *Piler) RunTests(project *Project) error {
 	containerName := fmt.Sprintf("pile-%s-%d", project.Config.Name, rand.Intn(100000))
 
 	// Run test container in docker
-	err := tools.Run(project.Dir, containerName, testImage)
+	err := tools.Run(buildOptions.Dir, containerName, testImage)
 
 	// Copy test results
 	if project.Config.Test.CopyResults.SrcPath != "" && project.Config.Test.CopyResults.DstPath != "" {
 		tools.Cp(
 			fmt.Sprintf("%s:%s", containerName, project.Config.Test.CopyResults.SrcPath),
-			filepath.Join(project.Dir, project.Config.Test.CopyResults.DstPath),
+			filepath.Join(buildOptions.Dir, project.Config.Test.CopyResults.DstPath),
 		)
 	}
 
