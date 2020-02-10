@@ -21,16 +21,26 @@ var buildCmd = &cobra.Command{
 		}
 
 		var lastBuildErr error
+		var images []string
 		for _, project := range projects {
 			buildImage, err := piler.Build(&project)
 			if err != nil {
 				log.Println(err)
 				lastBuildErr = err
-			} else {
-				fmt.Print(buildImage.FullyQualifiedImage)
+			} else if buildImage.FullyQualifiedImage != "" {
+				images = append(images, buildImage.FullyQualifiedImage)
 			}
 		}
-		return lastBuildErr
+
+		if lastBuildErr != nil {
+			return lastBuildErr
+		}
+		if len(images) == 1 {
+			fmt.Print(images[0])
+		} else if len(images) > 1 {
+			fmt.Print(images)
+		}
+		return nil
 	},
 }
 
