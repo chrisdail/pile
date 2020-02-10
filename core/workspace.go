@@ -82,9 +82,11 @@ func (ws *workspace) loadProjects(paths []string) ([]Project, error) {
 		return nil, err
 	}
 
+	// Remove the name from the workspace project as it is not a default
+	ws.Config.Name = ""
+
 	projects := make([]Project, len(paths))
 	for i, path := range paths {
-		// If the project and workspace directory are the same, this is the root project
 		if ws.Dir == path {
 			projects[i] = ws.Project
 		} else {

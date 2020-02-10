@@ -83,15 +83,15 @@ func (project *Project) Load(defaults *ProjectConfig) error {
 		return nil
 	}
 
-	// Merge in defaults
-	mergo.Merge(&project.Config, defaults)
-
-	// Compute build related information for this project
-
 	// Default the name to the directory if not present
 	if project.Config.Name == "" {
 		project.Config.Name = filepath.Base(project.Dir)
 	}
+
+	// Merge in defaults
+	mergo.Merge(&project.Config, defaults)
+
+	// Compute build related information for this project
 
 	// If there is no Dockerfile, skip all build related computations
 	dockerfilePath := filepath.Join(project.Dir, dockerfile)
