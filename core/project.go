@@ -63,7 +63,6 @@ type Project struct {
 	Tag               string
 	Image             string
 	ImageWithRegistry string
-	CanPush           bool
 }
 
 func (project *Project) Load(defaults *ProjectConfig) error {
@@ -123,12 +122,6 @@ func (project *Project) Load(defaults *ProjectConfig) error {
 	// Compute the image name for this project
 	project.Repository = fmt.Sprintf("%s%s", project.Config.ImagePrefix, project.Config.Name)
 	project.Image = fmt.Sprintf("%s:%s", project.Repository, project.Tag)
-
-	registryPrefix := project.Config.Registry.RegistryPrefix()
 	project.ImageWithRegistry = fmt.Sprintf("%s%s", project.Config.Registry.RegistryPrefix(), project.Image)
-	project.CanPush = false
-	if registryPrefix != "" {
-		project.CanPush = true
-	}
 	return nil
 }

@@ -3,4 +3,4 @@ image_prefix: "development/"
 
 registry:
     registry_v2:
-        url: "localhost:5000"
+        url: "http://localhost:5000"

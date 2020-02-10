@@ -2,7 +2,7 @@ package registry
 
 type Registry interface {
 	Prefix() string
-	Contains(repository string, tag string) (bool, error)
+	Contains(repository string, tag string) bool
 }
 
 type RegistryConfig struct {

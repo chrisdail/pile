@@ -17,6 +17,6 @@ func (registry *AmazonECR) Prefix() string {
 	return fmt.Sprintf("%s.dkr.ecr.%s.amazonaws.com/", registry.AccountID, region)
 }
 
-func (registry *AmazonECR) Contains(repository string, tag string) (bool, error) {
-	return false, nil
+func (registry *AmazonECR) Contains(repository string, tag string) bool {
+	return false
 }
