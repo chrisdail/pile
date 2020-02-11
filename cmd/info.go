@@ -21,8 +21,8 @@ var infoCmd = &cobra.Command{
 
 		log.Println("Projects")
 		for _, project := range projects {
-			fmt.Printf("- %s\n", project.Dir)
 			if project.CanBuild {
+				fmt.Printf("- %s\n", project.Dir)
 				fmt.Printf("  Builds: %s\n  Pushes As: %s\n",
 					project.Image,
 					project.ImageWithRegistry,

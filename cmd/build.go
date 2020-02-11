@@ -35,10 +35,15 @@ var buildCmd = &cobra.Command{
 		if lastBuildErr != nil {
 			return lastBuildErr
 		}
+
+		// If only a single image was built, print out only the image name
+		// This allows using the stdout as an input to other commands
 		if len(images) == 1 {
 			fmt.Print(images[0])
 		} else if len(images) > 1 {
-			fmt.Print(images)
+			for _, image := range images {
+				fmt.Println(image)
+			}
 		}
 		return nil
 	},
