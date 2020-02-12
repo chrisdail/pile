@@ -26,7 +26,7 @@ type ProjectConfig struct {
 	// Prefix for the container image name
 	ImagePrefix string `yaml:"image_prefix"`
 
-	// Prefix to add in front of the calculated version. Useful for variations of the same container with the same registry
+	// Prefix to add in front of the calculated version. Useful for SemVer/CalVer or for variations of an image in the same registry
 	VersionPrefix string `yaml:"version_prefix"`
 
 	// Template for computing the version strong
