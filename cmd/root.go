@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"os"
+	"path/filepath"
 
 	"github.com/chrisdail/pile/core"
 
@@ -18,6 +19,14 @@ var rootCmd = &cobra.Command{
 	Short:        "Simple docker container builder",
 	SilenceUsage: true,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		if !filepath.IsAbs(rootDir) {
+			workingDir, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+
+			rootDir = filepath.Join(workingDir, rootDir)
+		}
 		gitver.SetWorkingDir(rootDir)
 		return core.Workspace.SetDir(rootDir)
 	},
