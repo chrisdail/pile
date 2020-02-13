@@ -18,12 +18,14 @@ var tools = &buildtools.DockerBuildTools{}
 
 var ErrorTestsFailed = errors.New("Tests Failed")
 
+// Piler options for performing a pile build operation
 type Piler struct {
 	Force     bool
 	SkipPush  bool
 	SkipTests bool
 }
 
+// BuildImage image data produced by a build
 type BuildImage struct {
 	Name                string `json:"name"`
 	Repository          string `json:"repository"`
@@ -31,6 +33,7 @@ type BuildImage struct {
 	FullyQualifiedImage string `json:"fully_qualified_image"`
 }
 
+// Build performs a build on a given project
 func (piler *Piler) Build(project *Project) (*BuildImage, error) {
 	if !project.CanBuild {
 		return &BuildImage{}, nil
@@ -85,6 +88,7 @@ func (piler *Piler) Build(project *Project) (*BuildImage, error) {
 	return buildImage, err
 }
 
+// WriteManifest writes out a descriptor about what was built
 func (image *BuildImage) WriteManifest(dir string) error {
 	bytes, err := json.MarshalIndent(image, "", "    ")
 	if err != nil {
@@ -101,6 +105,7 @@ func (image *BuildImage) WriteManifest(dir string) error {
 	return nil
 }
 
+// RunTests runs tests for a project
 func (piler *Piler) RunTests(project *Project) error {
 	testImage := fmt.Sprintf("%s-%s:%s", project.Repository, project.Config.Test.Target, project.Tag)
 

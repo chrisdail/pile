@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 )
 
+// DockerBuildTools build tools for using the standard docker commands
 type DockerBuildTools struct{}
 
 func (*DockerBuildTools) Build(options *BuildOptions) error {

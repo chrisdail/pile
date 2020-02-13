@@ -9,8 +9,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecr"
 )
 
-const DefaultECRRegion = "us-east-1"
+const defaultECRRegion = "us-east-1"
 
+// AmazonECR Amazon ECR registry config
 type AmazonECR struct {
 	AccountID string `yaml:"account_id"`
 	Region    string
@@ -20,13 +21,15 @@ func (registry *AmazonECR) region() string {
 	if registry.Region != "" {
 		return registry.Region
 	}
-	return DefaultECRRegion
+	return defaultECRRegion
 }
 
+// Prefix returns the leading part of the image name for this registry
 func (registry *AmazonECR) Prefix() string {
 	return fmt.Sprintf("%s.dkr.ecr.%s.amazonaws.com/", registry.AccountID, registry.region())
 }
 
+// Contains checks to see if the registry contains the image with matching repository and tag
 func (registry *AmazonECR) Contains(repository string, tag string) bool {
 	sess := session.Must(session.NewSession(aws.NewConfig().WithRegion(registry.region())))
 	svc := ecr.New(sess)

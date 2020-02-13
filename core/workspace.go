@@ -59,6 +59,7 @@ func (ws *workspace) DiscoverProjectPaths() ([]string, error) {
 	return paths, err
 }
 
+// ProjectsFromArgs returns a set of configured projects from directory name args
 func (ws *workspace) ProjectsFromArgs(args []string) ([]Project, error) {
 	var (
 		paths []string

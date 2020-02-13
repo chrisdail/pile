@@ -16,6 +16,7 @@ import (
 const pileConfigName = "pile.yml"
 const dockerfile = "Dockerfile"
 
+// ProjectConfig configuration for a project
 type ProjectConfig struct {
 	// Alternative name for this image. If none specified, defaults to the directory of the project
 	Name string
@@ -53,9 +54,10 @@ type ProjectConfig struct {
 	}
 
 	// Docker registry settings for pushing images to and caching already built images
-	Registry registry.RegistryConfig
+	Registry registry.Config
 }
 
+// Project data about an active project
 type Project struct {
 	Dir string
 
@@ -68,6 +70,7 @@ type Project struct {
 	ImageWithRegistry string
 }
 
+// Load loads a project given a set of defaults from the root
 func (project *Project) Load(defaults *ProjectConfig) error {
 	configPath := filepath.Join(project.Dir, pileConfigName)
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
@@ -143,6 +146,7 @@ func (project *Project) versionedPaths() []string {
 	return paths
 }
 
+// ContextDir returns the context directory absolute path
 func (project *Project) ContextDir() string {
 	if project.Config.ContextDir != "" {
 		return filepath.Join(project.Dir, project.Config.ContextDir)

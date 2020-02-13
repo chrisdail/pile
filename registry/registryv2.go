@@ -8,12 +8,14 @@ import (
 	"github.com/heroku/docker-registry-client/registry"
 )
 
-type RegistryDockerV2 struct {
+// DockerV2 configuration information for an official Docker Registry v2
+type DockerV2 struct {
 	URL      string
 	Insecure bool
 }
 
-func (docker *RegistryDockerV2) Prefix() string {
+// Prefix returns the leading part of the image name for this registry
+func (docker *DockerV2) Prefix() string {
 	parsed, err := url.Parse(docker.URL)
 	if err != nil {
 		log.Println(err)
@@ -23,7 +25,8 @@ func (docker *RegistryDockerV2) Prefix() string {
 	return fmt.Sprintf("%s/", parsed.Host)
 }
 
-func (docker *RegistryDockerV2) Contains(repository string, tag string) bool {
+// Contains checks to see if the registry contains the image with matching repository and tag
+func (docker *DockerV2) Contains(repository string, tag string) bool {
 	var reg *registry.Registry
 	var err error
 	if docker.Insecure {
