@@ -1,0 +1,6 @@
+name: "node-app"
+test:
+    target: test
+    copy_results:
+        src_path: /app/build/.
+        dst_path: build
