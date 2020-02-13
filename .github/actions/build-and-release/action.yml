@@ -1,0 +1,5 @@
+name: 'build-and-release'
+description: 'Build and release this go project'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
