@@ -5,7 +5,7 @@ on:
 
 name: Build
 jobs:
-  release-darwin-amd64
+  release-darwin-amd64:
     name: release darwin/amd64
     runs-on: ubuntu-latest
     steps:
