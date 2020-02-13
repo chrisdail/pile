@@ -19,7 +19,7 @@ var rootCmd = &cobra.Command{
 	Short:        "Simple docker container builder",
 	SilenceUsage: true,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		if !filepath.IsAbs(rootDir) {
+		if rootDir != "" && !filepath.IsAbs(rootDir) {
 			workingDir, err := os.Getwd()
 			if err != nil {
 				return err
