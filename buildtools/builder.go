@@ -2,12 +2,12 @@ package buildtools
 
 // BuildOptions options to a docker build command
 type BuildOptions struct {
-	Dir       string
-	File      string
-	Image     string
-	Target    string
-	Pull      bool
-	BuildArgs map[string]string
+	Dir            string
+	DockerfilePath string
+	Image          string
+	Target         string
+	Pull           bool
+	BuildArgs      map[string]string
 }
 
 // BuildTools interface for working with different types of builders

@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 )
 
 // DockerBuildTools build tools for using the standard docker commands
@@ -15,10 +14,10 @@ func (*DockerBuildTools) Build(options *BuildOptions) error {
 	log.Printf("Building %s\n", options.Image)
 
 	args := []string{"build", "."}
-	if options.File != "" {
+	if options.DockerfilePath != "" {
 		args = append(args,
 			"-f",
-			filepath.Join(options.Dir, options.File),
+			options.DockerfilePath,
 		)
 	}
 	if options.Target != "" {
@@ -32,6 +31,7 @@ func (*DockerBuildTools) Build(options *BuildOptions) error {
 	}
 
 	args = append(args, "-t", options.Image)
+	print(args)
 	return docker(options.Dir, args...)
 }
 

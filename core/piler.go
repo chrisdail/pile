@@ -66,10 +66,11 @@ func (piler *Piler) Build(project *Project) (*BuildImage, error) {
 	}
 
 	buildOptions := &buildtools.BuildOptions{
-		Dir:       project.ContextDir(),
-		Image:     buildImage.FullyQualifiedImage,
-		Pull:      piler.Force,
-		BuildArgs: project.Config.BuildArgs,
+		Dir:            project.ContextDir(),
+		DockerfilePath: filepath.Join(project.Dir, dockerfile),
+		Image:          buildImage.FullyQualifiedImage,
+		Pull:           piler.Force,
+		BuildArgs:      project.Config.BuildArgs,
 	}
 	if err := tools.Build(buildOptions); err != nil {
 		return buildImage, err
@@ -110,11 +111,12 @@ func (piler *Piler) RunTests(project *Project) error {
 	testImage := fmt.Sprintf("%s-%s:%s", project.Repository, project.Config.Test.Target, project.Tag)
 
 	buildOptions := &buildtools.BuildOptions{
-		Dir:       project.ContextDir(),
-		Image:     testImage,
-		Pull:      piler.Force,
-		Target:    project.Config.Test.Target,
-		BuildArgs: project.Config.BuildArgs,
+		Dir:            project.ContextDir(),
+		DockerfilePath: filepath.Join(project.Dir, dockerfile),
+		Image:          testImage,
+		Pull:           piler.Force,
+		Target:         project.Config.Test.Target,
+		BuildArgs:      project.Config.BuildArgs,
 	}
 	if err := tools.Build(buildOptions); err != nil {
 		return err
