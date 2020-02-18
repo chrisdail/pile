@@ -227,7 +227,7 @@ base image for security fixes etc). This is the strategy used by pile.
 
 Pile will build an image if:
 
-- The working subtree is not dirty. If there are local changes, the container image will always be rebuilt and pushed.
+- The working subtree is dirty. If there are local changes, the container image will always be rebuilt and pushed.
 - The image does not exist in the remote registry. For supported registries, it will query the registry to see if the version already
   exists. If it does, it can skip the build.
 - The `--force` flag is used. If this flag is specified, it will always perform a build and push.
