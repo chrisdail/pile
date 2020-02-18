@@ -60,9 +60,9 @@ func New(paths []string) (*GitVersion, error) {
 // ForProjects computes the GitVersion for a set of projects relative to the git root
 func (ver *GitVersion) forPaths(paths []string) error {
 	var err error
-	if ver.Branch, err = GitBranch(); err != nil {
-		return err
-	}
+
+	// Ignore errors on git branch. Could be a detached head
+	ver.Branch, _ = GitBranch()
 
 	if ver.Commits, err = countCommits(paths); err != nil {
 		return err
