@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/chrisdail/pile/gitver"
 )
@@ -42,7 +43,7 @@ func (ws *workspace) ProjectPaths(projects []string) []string {
 
 	paths := make([]string, len(projects))
 	for i, project := range projects {
-		paths[i] = filepath.Join(ws.Dir, project)
+		paths[i] = filepath.Join(ws.Dir, strings.ReplaceAll(project, ws.Dir, ""))
 	}
 	return paths
 }
