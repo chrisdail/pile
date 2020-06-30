@@ -49,7 +49,7 @@ func (registry *AmazonECR) Contains(repository string, tag string) bool {
 			repository,
 			tag,
 			detail.ImagePushedAt,
-			detail.ImageDigest,
+			*detail.ImageDigest,
 		)
 		return true
 	}
